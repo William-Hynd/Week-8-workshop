@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r Install packages}
 #Install packages
 install.packages("ggplot2")
 install.packages("GGally")
@@ -28,7 +28,7 @@ library("dplyr")
 ```
 
 
-```{r}
+```{r Task 1}
 #Read in the data set and add headers
 wheat <- read.table("seeds_dataset.txt", header = FALSE)
 colnames(wheat) <- c("Area", "Perimeter", "Compactness", "Length_of_kernel", "Width_of_kernel", "Asymmetry_coefficent", "Length_of_kernel_groove","type")
@@ -62,7 +62,7 @@ dat %>% ggplot(aes(x = X1, y = X2, colour = type)) +
 ```
 
 ###Task 2
-```{r}
+```{r Task 2}
 #Read in the mesenchymal cells data set
 file <- "sol.txt"
 sol <- read_table2(file)
@@ -81,12 +81,29 @@ tsol <- tsol %>%
   extract(sample, 
           c("lineage","rep"),
           "(Y[0-9]{3,4})\\_([A-C])")
+
 #As there are only 15 values in tsol we use a PCA. PCA CAN ONLY BE CONDUCTED WHEN THERE IS 15 VALUES OR LESS.
+#Also must remove the non numeric columns (-lineage, - rep)
+pca <- tsol %>% 
+  select(-lineage, - rep) %>%
+  prcomp(scale. = TRUE)
+
+#Consider the variance in the first 15 pc
+summary(pca)[["importance"]][,1:15]
 
 
+##Plot PC1 against PC2
+#Put scores into a data frame
+dat <-  data.frame(pca$x)
+#Plot PC1 against PC2
+ggplot(dat, aes(x = PC1, y = PC2))+
+  geom_point()
 
-
-
+#The first two components capture very little variation in the cells, therefore it is worth looking at other pair wise comparisons.
+#Compare the first 15 Pcs.
+dat %>%
+  select(PC1:PC15) %>% 
+  ggpairs()
 ```
 
 
