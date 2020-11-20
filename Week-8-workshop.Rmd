@@ -9,22 +9,96 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+#Install packages
+install.packages("ggplot2")
+install.packages("GGally")
+install.packages("Rtsne")
+install.packages("magrittr")
+install.packages("tidyr")
+install.packages("rtsne")
+install.packages("dplyr")
+library("ggplot2")
+library("GGally")
+library("Rtsne")
+library("magrittr")
+library("tidyr")
+library("rtsne")
+library("dplyr")
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+```{r}
+#Read in the data set and add headers
+wheat <- read.table("seeds_dataset.txt", header = FALSE)
+colnames(wheat) <- c("Area", "Perimeter", "Compactness", "Length_of_kernel", "Width_of_kernel", "Asymmetry_coefficent", "Length_of_kernel_groove","type")
+#Clean table
+clean_wheat <- janitor::clean_names(wheat)
+summary(clean_wheat)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+clean_wheat_2 <- clean_wheat %>% mutate(type = recode(type, "1" = "kama", "2" = "rosa", "3" = "canadian"))
+
+
+##As the data set contains more than 200 values we cannot use a PCA. Therefore we must use a t-SNE.
+
+
+#Conduct t-sne
+tsne_W <- clean_wheat_2 %>% 
+  Rtsne(perplexity = 40,
+        check_duplicates = FALSE)
+#Place within data frame
+dat <- data.frame(tsne_W$Y)
+#plot the data
+dat %>% ggplot(aes(x = X1, y = X2)) +
+  geom_point(size=0.5)
+
+
+#Add type to allow for plot against color
+dat <- data.frame(dat, type = clean_wheat_2$type)
+
+#Plot graph
+dat %>% ggplot(aes(x = X1, y = X2, colour = type)) +
+  geom_point(size=0.5)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+###Task 2
+```{r}
+#Read in the mesenchymal cells data set
+file <- "sol.txt"
+sol <- read_table2(file)
+names(sol)
+#Transpose all the values 
+tsol <- sol %>% 
+  select(-genename) %>% 
+  t() %>% 
+  data.frame()
+#Use genenames in sol to name columns in tsol
+names(tsol) <- sol$genename
+#Column names of sol are now the row names of tsol. Add a column for this as well
+tsol$sample <- row.names(tsol)
+#
+tsol <- tsol %>% 
+  extract(sample, 
+          c("lineage","rep"),
+          "(Y[0-9]{3,4})\\_([A-C])")
+#As there are only 15 values in tsol we use a PCA. PCA CAN ONLY BE CONDUCTED WHEN THERE IS 15 VALUES OR LESS.
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
